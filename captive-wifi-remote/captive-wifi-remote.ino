@@ -7,9 +7,16 @@
 DNSServer dnsServer;
 AsyncWebServer server(80);
 
+#define defaultBrightness 25
+#define minBrightness 10
+#define maxBrightness 240
+
+int currentBrightness = defaultBrightness;
+
 String processor(const String& var){
-  if(var == "HELLO_FROM_TEMPLATE")
-    return F("Hello world!");
+  if(var == "MIN_BRIGHTNESS") return String(minBrightness);
+  if(var == "MAX_BRIGHTNESS") return String(maxBrightness);
+  if(var == "CURRENT_BRIGHTNESS") return String(currentBrightness);
   return String();
 }
 
@@ -24,23 +31,27 @@ public:
   }
 
   void handleRequest(AsyncWebServerRequest *request) {
-    if (request->url() == "/NEXT") {
-        Serial.println("NEXT PRESSED");
+    if (request->url() == "/styles.css"){
+      request->send(SPIFFS, "/www/styles.css", "text/css");
     }
-    else if (request->url() == "/PREVIOUS") {
-        Serial.println("PREVIOUS PRESSED");
-    }
-    
-//    AsyncResponseStream *response = request->beginResponseStream("text/html");
-//    response->print("<!DOCTYPE html><html style='width: 100%; height: 100%'><head><title>Wifi Remote</title></head><body style='width: 100%; height: 100%'>");
-//    response->print("<a href='/NEXT'><button style='width: 100%;height: 50%;font-size: 12vw;'>NEXT .gif</button></a>");
-//    response->print("<a href='/PREVIOUS'><button style='width: 100%;height: 50%;font-size: 12vw;'>PREVIOUS .gif</button></a>");
-//    response->print("</body></html>");
-//    request->send(response);
+    else {
+      if (request->url() == "/NEXT") {
+          Serial.println("NEXT PRESSED");
+      }
+      else if (request->url() == "/PREVIOUS") {
+          Serial.println("PREVIOUS PRESSED");
+      }
 
-    //Send index.htm with template processor function
-    request->send(SPIFFS, "/www/index.htm", "text/html", false, processor);
-//    request->send(SPIFFS, "/www/index.htm", "text/html");
+      if(request->hasParam("brightness")){
+        AsyncWebParameter* p = request->getParam("brightness");
+        currentBrightness = p->value().toInt();
+          Serial.print("New brightness: ");
+          Serial.println(currentBrightness);
+      }
+      
+      //Send index.htm with template processor function
+      request->send(SPIFFS, "/www/index.htm", "text/html", false, processor);
+    }
   }
 };
 
