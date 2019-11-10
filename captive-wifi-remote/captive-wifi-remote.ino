@@ -7,9 +7,12 @@
 DNSServer dnsServer;
 AsyncWebServer server(80);
 
+bool nextFlag = false;
+bool prevFlag = false;
+
 #define defaultBrightness 25
-#define minBrightness 10
-#define maxBrightness 240
+#define minBrightness 0
+#define maxBrightness 210
 
 int currentBrightness = defaultBrightness;
 
@@ -37,9 +40,11 @@ public:
     else {
       if (request->url() == "/NEXT") {
           Serial.println("NEXT PRESSED");
+          nextFlag = true;
       }
       else if (request->url() == "/PREVIOUS") {
           Serial.println("PREVIOUS PRESSED");
+          prevFlag = true;
       }
 
       if(request->hasParam("brightness")){
@@ -63,11 +68,10 @@ void setup(){
   SPIFFS.begin();
   
   Serial.println("Configuring access point...");
-  
-  //your other setup stuff...
   WiFi.softAP("test");
+  
   dnsServer.start(53, "*", WiFi.softAPIP());
-  server.addHandler(new CaptiveRequestHandler());//only when requested from AP
+  server.addHandler(new CaptiveRequestHandler());
   //more handlers...
   server.begin();
   Serial.print("Server started. IP Address: ");
